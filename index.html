@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>IndexDB</title>
+</head>
+
+<body>
+
+	<h1>IndexDB</h1>
+
+	<input id="file" type="file">
+
+	<script type="module">
+
+		import IDB from './idb.js';
+
+		let idb = new IDB('mydb', {
+			version: 1,
+			onupgradeneeded: db => {
+				if (!db.objectStoreNames.contains('dicom')) {
+					let objectStore = db.createObjectStore('dicom', { keyPath: 'imageId' });
+					objectStore.createIndex('imageId', 'imageId', { unique: false });
+				}
+			}
+
+		});
+
+		//添加
+		// for (let i = 0; i <= 99; i++) {
+		// 	idb.store('dicom').add({ imageId: i, data: '阿里巴巴披露咋' }).then(res => { console.log('add:', res) })
+		// }
+
+		//修改
+		// idb.store('dicom').update({imageId: 1608875255937, data: '222'}).then(res=>{console.log('update:', res)})
+
+		//删除
+		// idb.store('dicom').setRange(IDBKeyRange.only(1608875287854)).remove().then(res => { console.log('remove:', res) })
+
+		//清空
+		// idb.store('dicom').clear().then(res => { console.log('clear:', res) });
+
+		//查询
+		// idb.store('dicom').setIndex('imageId').setRange(IDBKeyRange.only(3)).gets().then(res => console.log(res));
+
+		idb.store('dicom').index('imageId').range(IDBKeyRange.only(3)).get().then(res => console.log(res));
+
+		// idb.insert('dicom', { imageId: Date.now(), data: 'datas...' }).then(res => console.log('insert OK', res));
+		// idb.gets('dicom').then(res => console.log('gets', res));
+		// idb.get('dicom', item => {
+		// 	return item.imageId === 1608789891381
+		// }).then(res => console.log('get', res));
+
+		// idb.getByIndex('dicom', 'imageId', 1608789891381).then(res => console.log('getByIndex', res));
+
+		var input = document.getElementById("file"); //input file
+		input.onchange = function () {
+			var file = this.files[0];
+			if (!!file) {
+				//读取本地文件，以gbk编码方式输出
+				var reader = new FileReader();
+				reader.readAsArrayBuffer(file);
+				reader.onload = function () {
+
+					let savePromise = [];
+
+					let id = Date.now();
+
+					console.log('开始存储indexDB');
+
+
+					//test save
+					for (let i = 0; i < 500; i++) {
+						savePromise.push(idb.insert('dicom', { imageId: id + i, data: this.result }));
+					}
+
+					Promise.all(savePromise).then(res => {
+						console.log('save 1000 ok', (Date.now() - id) / 1000 + '秒');
+					})
+
+				}
+			}
+		}
+
+	</script>
+
+</body>
+
+</html>
