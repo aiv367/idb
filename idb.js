@@ -2,7 +2,8 @@
   * IndexDB库
   * @author 大花猫花大
   * @date 2020-12-28
-  * http://aiv367.githut.com/idb
+  * @version 1.0
+  * https://github.com/aiv367/idb
   */
 class IDB {
 
@@ -88,7 +89,8 @@ class IDB {
 		let params = {
 			index: undefined, //索引
 			range: undefined, //范围 IDBKeyRange
-			limit: [0, 0]
+			limit: [0, 0],
+
 		};
 
 		return {
@@ -155,7 +157,8 @@ class IDB {
 			},
 
 			//获得多条
-			gets() {
+			//direction = next（从头开始向后遍历）、nextunique（从头开始向后遍历，重复的值只遍历一次）、prev（从尾部开始向前遍历）、prevunique（从尾部开始向前遍历，重复的值只遍历一次）。
+			gets(direction = 'next') {
 
 				return new Promise((resolve, reject) => {
 
@@ -172,7 +175,7 @@ class IDB {
 							request = request.index(params.index);
 						}
 
-						request = request.openCursor(params.range);
+						request = request.openCursor(params.range, direction);
 
 						request.onsuccess = evt => {
 

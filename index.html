@@ -5,13 +5,34 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>IndexDB</title>
+	<style>
+		.thumbnail {
+			display: inline-block;
+			width: 130px;
+			height: 150px;
+			border: 1px solid #222;
+			vertical-align: top;
+			text-align: center;
+		}
+
+		.thumbnail img {
+			max-width: 100px;
+			max-height: 100px;
+		}
+	</style>
+	<script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
 </head>
 
 <body>
 
-	<h1>IndexDB</h1>
+	<h1>IndexDB Demo</h1>
 
-	<input id="file" type="file">
+	<div id="thumbnails"></div>
+
+	<input id="file" type="file"/>
+	<button id="clear">清空store</button>
+
 
 	<script type="module">
 
@@ -21,12 +42,82 @@
 			version: 1,
 			onupgradeneeded: db => {
 				if (!db.objectStoreNames.contains('dicom')) {
-					let objectStore = db.createObjectStore('dicom', { keyPath: 'imageId' });
+					let objectStore = db.createObjectStore('dicom', { keyPath: 'imageId', autoIncrement: true });
 					objectStore.createIndex('imageId', 'imageId', { unique: false });
 				}
 			}
 
 		});
+
+		function list() {
+
+			idb.store('dicom').limit(0, 100).gets('prev').then(res => {
+
+				let $thumbnails = $('#thumbnails');
+				$thumbnails.empty();
+
+				res.forEach(item => {
+
+					let $thumbnail = $(`
+						<div class="thumbnail" title="双击删除, 单击查看console.log">
+							<img></img>
+							<button class="btn-remove">remove</button>
+							<button class="btn-view">view</button>
+						</div>
+					`);
+
+					//删除
+					$thumbnail.find('.btn-remove').on('click', function (evt) {
+						idb.store('dicom').range(IDBKeyRange.only(item.imageId)).remove().then(list);
+					});
+
+					//单击
+					$thumbnail.find('.btn-view').on('click', function (evt) {
+						idb.store('dicom').range(IDBKeyRange.only(item.imageId)).get().then(console.log)
+					});
+
+					$thumbnail.find('img').attr('src', item.data);
+					$thumbnails.append($thumbnail);
+				})
+
+			});
+		}
+
+		list();
+
+		//增加
+		$('#file').on('change', function (evt) {
+
+			var file = this.files[0];
+			if (!!file) {
+
+				//读取本地文件，以gbk编码方式输出
+				var reader = new FileReader();
+				reader.readAsDataURL(file);//.readAsArrayBuffer(file);
+				reader.onload = function () {
+
+					let promises = [];
+					for (let i = 0; i < 20; i++) {
+
+						let promise = idb.store('dicom').add({ data: this.result });
+
+						promises.push(promise);
+
+					}
+
+					Promise.all(promises).then(res => {
+						list();
+					});
+
+				}
+			}
+		});
+
+		//清空
+		$('#clear').on('click', function(evt){
+			idb.store('dicom').clear().then(list);
+		});
+		
 
 		//添加
 		// for (let i = 0; i <= 99; i++) {
@@ -45,7 +136,7 @@
 		//查询
 		// idb.store('dicom').setIndex('imageId').setRange(IDBKeyRange.only(3)).gets().then(res => console.log(res));
 
-		idb.store('dicom').range(IDBKeyRange.lowerBound(22760)).limit(2, 2).gets().then(res => console.log(res));
+		// idb.store('dicom').range(IDBKeyRange.lowerBound(22760)).limit(2, 2).gets().then(res => console.log(res));
 
 		// idb.insert('dicom', { imageId: Date.now(), data: 'datas...' }).then(res => console.log('insert OK', res));
 		// idb.gets('dicom').then(res => console.log('gets', res));
@@ -55,36 +146,14 @@
 
 		// idb.getByIndex('dicom', 'imageId', 1608789891381).then(res => console.log('getByIndex', res));
 
-		var input = document.getElementById("file"); //input file
-		input.onchange = function () {
-			var file = this.files[0];
-			if (!!file) {
-				//读取本地文件，以gbk编码方式输出
-				var reader = new FileReader();
-				reader.readAsArrayBuffer(file);
-				reader.onload = function () {
+		// var input = document.getElementById("file"); //input file
+		// input.onchange = function () {
 
-					let savePromise = [];
-
-					let id = Date.now();
-
-					console.log('开始存储indexDB');
-
-
-					//test save
-					for (let i = 0; i < 500; i++) {
-						savePromise.push(idb.insert('dicom', { imageId: id + i, data: this.result }));
-					}
-
-					Promise.all(savePromise).then(res => {
-						console.log('save 1000 ok', (Date.now() - id) / 1000 + '秒');
-					})
-
-				}
-			}
-		}
+		// }
 
 	</script>
+
+
 
 </body>
 
