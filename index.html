@@ -45,7 +45,7 @@
 		//查询
 		// idb.store('dicom').setIndex('imageId').setRange(IDBKeyRange.only(3)).gets().then(res => console.log(res));
 
-		idb.store('dicom').index('imageId').range(IDBKeyRange.only(3)).get().then(res => console.log(res));
+		idb.store('dicom').range(IDBKeyRange.lowerBound(22760)).limit(2, 2).gets().then(res => console.log(res));
 
 		// idb.insert('dicom', { imageId: Date.now(), data: 'datas...' }).then(res => console.log('insert OK', res));
 		// idb.gets('dicom').then(res => console.log('gets', res));

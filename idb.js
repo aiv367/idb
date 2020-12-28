@@ -16,16 +16,27 @@ class IDB {
 			blocked() { }
 		}, opts)
 
-		this.db = undefined; //IDBDatabase
 		this.request = undefined; //IDBRequest
+		this.db = undefined; //IDBDatabase promise
+
+		if ((window.mozIndexedDB || window.webkitIndexedDB)) {
+			console.log('不支持indexDB');
+			return false;
+		}
+
+		this.open(databaseName, this.opts.version);
+
+	}
+
+	open(databaseName, version) {
 
 		let resolve, reject;
-		this.dbPromise = new Promise((_resolve, _reject) => {
+		this.db = new Promise((_resolve, _reject) => {
 			resolve = _resolve;
 			reject = _reject;
 		});
 
-		let request = window.indexedDB.open(databaseName, this.opts.version);
+		let request = window.indexedDB.open(databaseName, version);
 
 		request.onupgradeneeded = evt => {
 			this.opts.onupgradeneeded(evt.target.result);
@@ -34,7 +45,6 @@ class IDB {
 		request.onsuccess = evt => {
 
 			let db = evt.target.result;
-			this.db = db;
 			this.opts.onsuccess(db);
 
 			//避免多窗口时造成数据错误
@@ -66,8 +76,7 @@ class IDB {
 		let params = {
 			index: undefined, //索引
 			range: undefined, //范围 IDBKeyRange
-			filter: undefined, //过滤函数
-			limit: [0, 0],//
+			limit: [0, 0]
 		};
 
 		return {
@@ -76,7 +85,7 @@ class IDB {
 
 				return new Promise((resolve, reject) => {
 
-					that.dbPromise.then(db => {
+					that.db.then(db => {
 						let request = db.transaction([storeName], 'readwrite').objectStore(storeName).add(data);
 						request.onsuccess = resolve;
 						request.onerror = reject
@@ -90,7 +99,7 @@ class IDB {
 
 				return new Promise((resolve, reject) => {
 
-					that.dbPromise.then(db => {
+					that.db.then(db => {
 						let request = db.transaction([storeName], 'readwrite').objectStore(storeName).put(data);
 						request.onsuccess = resolve;
 						request.onerror = reject
@@ -100,12 +109,18 @@ class IDB {
 
 			},
 
-			remove(key) {
+			remove() {
 
 				return new Promise((resolve, reject) => {
 
-					that.dbPromise.then(db => {
-						let request = db.transaction([storeName], 'readwrite').objectStore(storeName).delete(key !== undefined ? key : params.range);
+					//没有条件终止
+					if (!params.range) {
+						resolve(false);
+						return;
+					}
+
+					that.db.then(db => {
+						let request = db.transaction([storeName], 'readwrite').objectStore(storeName).delete(params.range);
 						request.onsuccess = resolve;
 						request.onerror = reject
 					});
@@ -113,11 +128,11 @@ class IDB {
 				});
 			},
 
-			clear(){
+			clear() {
 
 				return new Promise((resolve, reject) => {
 
-					that.dbPromise.then(db => {
+					that.db.then(db => {
 						let request = db.transaction([storeName], 'readwrite').objectStore(storeName).clear();
 						request.onsuccess = resolve;
 						request.onerror = reject
@@ -128,15 +143,16 @@ class IDB {
 			},
 
 			//获得多条
-			gets(resultType = 'rows') { //resultType = rows | single | count
+			gets() {
 
 				return new Promise((resolve, reject) => {
 
-					that.dbPromise.then(db => {
+					that.db.then(db => {
 
-						let result = resultType === 'count' ? 0 : [];
 						let request = db.transaction([storeName], 'readonly').objectStore(storeName);
 						let isAdvancing = false; //是否移动游标
+						let result = [];
+
 						let start = params.limit[0]; //limit start, length
 						let length = params.limit[1]; //limit start, length
 
@@ -150,7 +166,7 @@ class IDB {
 
 							let cursor = evt.target.result;
 
-							//从此处开始
+							//移动游标从此处开始
 							if (!isAdvancing && cursor && start) {
 								isAdvancing = true;
 								cursor.advance(start);
@@ -159,26 +175,12 @@ class IDB {
 
 							if (cursor) {
 
-								if (!params.filter || (params.filter && params.filter(cursor.value) === true)) {
+								result.push(cursor.value);
 
-									if (resultType === 'count') {
-										result++;
-									} else {
-										result.push(cursor.value);
-									}
-								}
-
-								if (resultType === 'single') {
-									resolve(result[0]);
+								if (length && result.length >= length) {
+									resolve(result);
 								} else {
-
-									let count = resultType === 'rows' ? result.length : result;
-
-									if (length && count >= length) {
-										resolve(result);
-									} else {
-										cursor.continue();
-									}
+									cursor.continue();
 								}
 
 							} else {
@@ -192,16 +194,66 @@ class IDB {
 
 					});
 				});
+
 			},
 
 			//获得单条
 			get() {
-				return this.gets('single');
+				return new Promise((resolve, reject) => {
+
+					//没有条件终止
+					if (!params.range) {
+						resolve('');
+						return;
+					}
+
+					that.db.then(db => {
+
+						let request = db.transaction([storeName], 'readonly').objectStore(storeName);
+
+						if (params.index) {
+							request = request.index(params.index);
+						}
+
+						request = request.openCursor(params.range);
+
+						request.onsuccess = evt => {
+							resolve(evt.target.result.value);
+						};
+
+						request.onerror = evt => {
+							reject(evt);
+						};
+
+					});
+				});
 			},
 
 			//统计记录数
-			count(start, length){
-				return this.gets('count');
+			count() {
+
+				return new Promise((resolve, reject) => {
+
+					that.db.then(db => {
+
+						let request = db.transaction([storeName], 'readonly').objectStore(storeName);
+
+						if (params.index) {
+							request = request.index(params.index);
+						}
+
+						request = request.count(params.range);//获得总记录数
+
+						request.onsuccess = evt => {
+							resolve(evt.target.result);
+						};
+
+						request.onerror = evt => {
+							reject(evt);
+						};
+
+					});
+				});
 			},
 
 			//设置索引
@@ -217,14 +269,8 @@ class IDB {
 				return this;
 			},
 
-			//结果过滤器
-			filter(filter) {
-				params.filter = filter;
-				return this;
-			},
-
 			//设置分页
-			limit(start, length){
+			limit(start, length) {
 				params.limit = [start, length];
 				return this;
 			}
