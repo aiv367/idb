@@ -1,12 +1,12 @@
-
-// IDBKeyRange.lowerBound()：指定下限。
-// IDBKeyRange.upperBound()：指定上限。
-// IDBKeyRange.bound()：同时指定上下限。
-// IDBKeyRange.only()：指定只包含一个值。
-
+/**
+  * IndexDB库
+  * @author 大花猫花大
+  * @date 2020-12-28
+  * http://aiv367.githut.com/idb
+  */
 class IDB {
 
-	constructor(databaseName, opts) {
+ 	constructor(databaseName, opts) {
 
 		this.opts = Object.assign({
 			version: 1,
@@ -67,6 +67,18 @@ class IDB {
 
 		this.request = request;
 
+		return this.request;
+
+	}
+
+	close(){
+		return new Promise((resolve, reject) => {
+
+			this.db.then(db => {
+				db.close();
+			});
+
+		});
 	}
 
 	store(storeName) {
@@ -263,6 +275,10 @@ class IDB {
 			},
 
 			//https://www.bookstack.cn/read/javascript-tutorial/spilt.11.docs-bom-indexeddb.md
+			// IDBKeyRange.lowerBound()：指定下限。
+			// IDBKeyRange.upperBound()：指定上限。
+			// IDBKeyRange.bound()：同时指定上下限。
+			// IDBKeyRange.only()：指定只包含一个值。
 			//查询范围 IDBKeyRange
 			range(range) {
 				params.range = range;
