@@ -60,6 +60,7 @@ idb.store('dicom').index('imageId').range(IDBKeyRange.only(2)).get().then(res =>
 
 ```javascript
 idb.store('dicom').gets().then(res => console.log(res)); //查询全部记录
+idb.store('dicom').gets('prev').then(res => console.log(res)); //反向查询全部记录
 idb.store('dicom').limit(10, 20).gets().then(res => console.log(res)); //查询全部记录, 从第10位置开始的20条记录，limit 主要用于分页
 idb.store('dicom').range(IDBKeyRange.bound(10, 20)).gets().then(res => console.log(res)); //查询主键10-20之间的数据
 idb.store('dicom').range(IDBKeyRange.lowerBound(10)).gets().then(res => console.log(res)); //查询主键下限，大于等于10的数据
