@@ -1,6 +1,6 @@
 # idb
 一个精致的IndexDB操作库，简简单单，封装了常用的增、删、改、查操作，不要那么复杂。
-这个库的意义是简化 indexDB 开发调用，要求使用者需要具备一定的  indexDB 使用能力
+这个库的意义是简化 indexDB 开发调用，要求使用者具备一定的  indexDB 技能
 
 ### 引入库
 
@@ -13,8 +13,8 @@ import IDB from './idb.js';
 let idb = new IDB('mydb', {
 	version: 1, //默认是1
 	onupgradeneeded: db => { //db: IDBDatabase 对象
-        //创建数据仓库，索引等
-        //这里创建数据仓库，为什么没有设计成其它库那样json对象配置数据库的形式，是为了应对后续数据库升级后的各种需求
+		//创建数据仓库，索引等
+		//这里创建数据仓库，为什么没有设计成其它库那样json对象配置数据库的形式，是为了应对后续数据库升级后的各种需求
 		if (!db.objectStoreNames.contains('dicom')) { //判断表是否存在
 			let objectStore = db.createObjectStore('dicom', { keyPath: 'imageId' }); //创建数据仓库
 			objectStore.createIndex('imageId', 'imageId', { unique: false }); //创建索引
@@ -40,7 +40,7 @@ idb.store('dicom').update({imageId: 1, data: '新文本'}).then(res=>{console.lo
 ### 删除记录
 
 ```javascript
-idb.store('dicom').range(IDBKeyRange.only(1608875287854)).remove().then(res => { console.log('remove:', res) })
+idb.store('dicom').range(IDBKeyRange.only(1)).remove().then(res => { console.log('remove:', res) })
 ```
 
 ### 清空表
@@ -79,7 +79,7 @@ IDBKeyRange.bound(x, y, false, true);// All keys ≥ x &&< y
 IDBKeyRange.only(z);// The key = z
 ```
 
-### 获得数据库连接
+### 获得数据库 IDBDatabase 对象，实现更复杂的操作
 ```javascript
 idb.db.then(db=>{
 	//db 这里得到 IDBDatabase 对象，可以做更多的原生操作
