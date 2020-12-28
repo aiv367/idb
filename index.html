@@ -26,12 +26,13 @@
 
 <body>
 
-	<h1>IndexDB Demo</h1>
-
-	<div id="thumbnails"></div>
+	<h1>IndexDB Demo：图片本地存储（一次存储20张）</h1>
 
 	<input id="file" type="file"/>
 	<button id="clear">清空store</button>
+
+	<p>前100张图</p>
+	<div id="thumbnails"></div>
 
 
 	<script type="module">
@@ -59,10 +60,10 @@
 				res.forEach(item => {
 
 					let $thumbnail = $(`
-						<div class="thumbnail" title="双击删除, 单击查看console.log">
+						<div class="thumbnail">
 							<img></img>
 							<button class="btn-remove">remove</button>
-							<button class="btn-view">view</button>
+							<button class="btn-view" title="通过控制台查看结果">view</button>
 						</div>
 					`);
 
