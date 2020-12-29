@@ -7,7 +7,7 @@
   */
 class IDB {
 
- 	constructor(databaseName, opts) {
+	constructor(databaseName, opts) {
 
 		this.opts = Object.assign({
 			version: 1,
@@ -20,8 +20,8 @@ class IDB {
 		this.request = undefined; //IDBRequest
 		this.db = undefined; //IDBDatabase promise
 
-		if ((window.mozIndexedDB || window.webkitIndexedDB)) {
-			console.log('不支持indexDB');
+		if (!(window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB)) {
+			throw 'IndexDB: Does not support indexDB';
 			return false;
 		}
 
@@ -51,7 +51,7 @@ class IDB {
 			//避免多窗口时造成数据错误
 			db.onversionchange = evt => {
 				db.close();
-				alert("IndexDB: 页面内容已过期，请刷新");
+				throw 'IndexDB: Page content has expired, please refresh';
 			}
 
 			resolve(db);
