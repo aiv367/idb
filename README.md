@@ -2,13 +2,15 @@
 一个精致的 IndexDB 库，不要那么复杂，不要那么臃肿，简简单单，灵活好用。
 内部采用 Promise 技术对原生 IndexDB 各种回调进行封装，降低了 indexDB 使用难度, 让你的代码更简洁易读。
 
+[IndexDB中文文档](https://www.bookstack.cn/read/javascript-tutorial/docs-bom-indexeddb.md)
+
+
 ### 引入库
 
 html
 ```html
 <script src="idb.js"></script>
 ```
-
 
 JSModule 
 ```javascript
@@ -81,8 +83,9 @@ idb.store('dicom').range(IDBKeyRange.lowerBound(10)).gets().then(res => console.
 ```
 
 ### 关于查询中的range 参数，使用原生的 IDBKeyRange对象，具体IDBKeyRange说明请参考：
+[https://www.bookstack.cn/read/javascript-tutorial/spilt.11.docs-bom-indexeddb.md](https://www.bookstack.cn/read/javascript-tutorial/spilt.11.docs-bom-indexeddb.md)
+
 ```javascript
-//文档：https://www.bookstack.cn/read/javascript-tutorial/spilt.11.docs-bom-indexeddb.md
 IDBKeyRange.upperBound(x);// All keys ≤ x
 IDBKeyRange.upperBound(x, true);// All keys < x
 IDBKeyRange.lowerBound(y);// All keys ≥ y
