@@ -1,6 +1,6 @@
 # idb
 一个精致的IndexDB操作库，简简单单，封装了常用的增、删、改、查操作，不要那么复杂。
-这个库的意义是简化 indexDB 开发调用，要求使用者具备一定的  indexDB 技能
+内部采用Promise, 对各个异步封装，这个库的意义是简化 indexDB 开发调用，要求使用者具备一定的  indexDB 技能
 
 ### 引入库
 
@@ -40,7 +40,8 @@ idb.store('dicom').update({imageId: 1, data: '新文本'}).then(res=>{console.lo
 ### 删除记录
 
 ```javascript
-idb.store('dicom').range(IDBKeyRange.only(1)).remove().then(res => { console.log('remove:', res) })
+idb.store('dicom').remove(1).then(res => { console.log('remove:', res) }) //通过remove参数，删除索引值是 1 的记录
+idb.store('dicom').range(IDBKeyRange.only(1)).remove().then(res => { console.log('remove:', res) }) //通过设置range, 删除索引值是 1 的记录
 ```
 
 ### 清空表
@@ -52,8 +53,9 @@ idb.store('dicom').clear().then(res => { console.log('clear:', res) });
 ### 查询一条记录
 
 ```javascript
-idb.store('dicom').range(IDBKeyRange.only(2)).get().then(res => console.log(res)); //查找主键是2的记录
-idb.store('dicom').index('imageId').range(IDBKeyRange.only(2)).get().then(res => console.log(res));//设置索引imageId，查找主键是2的记录
+idb.store('dicom').get(2).then(res => console.log(res)); //通过设置get参数，查找主键是2的记录
+idb.store('dicom').range(IDBKeyRange.only(2)).get().then(res => console.log(res)); //通过设置range，查找主键是2的记录
+idb.store('dicom').index('imageId').get(2).then(res => console.log(res));//设置索引imageId，查找主键是2的记录
 ```
 
 ### 查询一组记录
@@ -62,6 +64,7 @@ idb.store('dicom').index('imageId').range(IDBKeyRange.only(2)).get().then(res =>
 idb.store('dicom').gets().then(res => console.log(res)); //查询全部记录
 idb.store('dicom').gets('prev').then(res => console.log(res)); //反向查询全部记录
 idb.store('dicom').limit(10, 20).gets().then(res => console.log(res)); //查询全部记录, 从第10位置开始的20条记录，limit 主要用于分页
+idb.store('dicom').range(IDBKeyRange.bound(100, 999)).limit(10, 20).gets().then(res => console.log(res)); //查询主键100 - 999区间，从第10位置开始的20条记录。limit 主要用于分页
 idb.store('dicom').range(IDBKeyRange.bound(10, 20)).gets().then(res => console.log(res)); //查询主键10-20之间的数据
 idb.store('dicom').range(IDBKeyRange.lowerBound(10)).gets().then(res => console.log(res)); //查询主键下限，大于等于10的数据
 ```

@@ -123,7 +123,11 @@ class IDB {
 
 			},
 
-			remove() {
+			remove(key) {
+
+				if(key !== undefined) {
+					params.range = IDBKeyRange.only(key);
+				}
 
 				return new Promise((resolve, reject) => {
 
@@ -213,7 +217,12 @@ class IDB {
 			},
 
 			//获得单条
-			get() {
+			get(key) {
+
+				if(key !== undefined) {
+					params.range = IDBKeyRange.only(key);
+				}
+
 				return new Promise((resolve, reject) => {
 
 					//没有条件终止
