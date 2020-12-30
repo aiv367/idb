@@ -6,6 +6,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>IndexDB</title>
 	<style>
+
 		.thumbnail {
 			display: inline-block;
 			width: 130px;
@@ -19,8 +20,11 @@
 			max-width: 100px;
 			max-height: 100px;
 		}
+
 	</style>
-	<script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+	<script src="jquery.min.js"></script>
+	<script src="../idb.js"></script>
 
 </head>
 
@@ -35,9 +39,7 @@
 	<div id="thumbnails"></div>
 
 
-	<script type="module">
-
-		import IDB from './idb.js';
+	<script>
 
 		let idb = new IDB('mydb', {
 			version: 1,

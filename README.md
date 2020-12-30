@@ -1,10 +1,21 @@
 # idb
-一个精致的IndexDB操作库，简简单单，封装了常用的增、删、改、查操作，不要那么复杂。
-内部采用Promise, 对各个异步封装，这个库的意义是简化 indexDB 开发调用，要求使用者具备一定的  indexDB 技能
+一个精致的 IndexDB 库，不要那么复杂，不要那么臃肿，简简单单，灵活好用。
+内部采用 Promise 技术对原生 IndexDB 各种回调进行封装，降低了 indexDB 使用难度, 让你的代码更简洁易读。
 
 ### 引入库
 
+html
+```html
+<script src="idb.js"></script>
+```
+
+
+JSModule 
 ```javascript
+// CommonJS
+let IDB = require('./idb.js');
+
+// Webpack
 import IDB from './idb.js';
 ```
 ### 创建数据库

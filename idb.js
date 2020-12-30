@@ -1,316 +1,326 @@
-/**
-  * IndexDB库
-  * @author 大花猫花大
-  * @date 2020-12-28
-  * @version 1.0
-  * https://github.com/aiv367/idb
-  */
-class IDB {
+(function () {
 
-	constructor(databaseName, opts) {
+	/*!
+	 * IndexDB库
+	 * @author 大花猫花大
+	 * @date 2020-12-30
+	 * @version 1.0.1
+	 * https://github.com/aiv367/idb
+	 */
+	class IDB {
 
-		this.opts = Object.assign({
-			version: 1,
-			onupgradeneeded() { },
-			onsuccess() { },
-			onerror() { },
-			blocked() { }
-		}, opts)
+		constructor(databaseName, opts) {
 
-		this.request = undefined; //IDBRequest
-		this.db = undefined; //IDBDatabase promise
+			this.opts = Object.assign({
+				version: 1,
+				onupgradeneeded() { },
+				onsuccess() { },
+				onerror() { },
+				blocked() { }
+			}, opts)
 
-		if (!(window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB)) {
-			throw 'IndexDB: Does not support indexDB';
-			return false;
+			this.request = undefined; //IDBRequest
+			this.db = undefined; //IDBDatabase promise
+
+			if (!(window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB)) {
+				throw 'IndexDB: Does not support indexDB';
+				return false;
+			}
+
+			this.open(databaseName, this.opts.version);
+
 		}
 
-		this.open(databaseName, this.opts.version);
+		open(databaseName, version) {
 
-	}
-
-	open(databaseName, version) {
-
-		let resolve, reject;
-		this.db = new Promise((_resolve, _reject) => {
-			resolve = _resolve;
-			reject = _reject;
-		});
-
-		let request = window.indexedDB.open(databaseName, version);
-
-		request.onupgradeneeded = evt => {
-			this.opts.onupgradeneeded(evt.target.result);
-		};
-
-		request.onsuccess = evt => {
-
-			let db = evt.target.result;
-			this.opts.onsuccess(db);
-
-			//避免多窗口时造成数据错误
-			db.onversionchange = evt => {
-				db.close();
-				throw 'IndexDB: Page content has expired, please refresh';
-			}
-
-			resolve(db);
-		};
-
-		request.onerror = evt => {
-			this.opts.onerror(evt.target.error);
-			reject(evt.target.error);
-		};
-
-		request.blocked = evt => {
-			this.opts.blocked(evt);
-		};
-
-		this.request = request;
-
-		return this.request;
-
-	}
-
-	close(){
-		return new Promise((resolve, reject) => {
-
-			this.db.then(db => {
-				db.close();
+			let resolve, reject;
+			this.db = new Promise((_resolve, _reject) => {
+				resolve = _resolve;
+				reject = _reject;
 			});
 
-		});
-	}
+			let request = window.indexedDB.open(databaseName, version);
 
-	store(storeName) {
+			request.onupgradeneeded = evt => {
+				this.opts.onupgradeneeded(evt.target.result);
+			};
 
-		let that = this;
+			request.onsuccess = evt => {
 
-		let params = {
-			index: undefined, //索引
-			range: undefined, //范围 IDBKeyRange
-			limit: [0, 0],
+				let db = evt.target.result;
+				this.opts.onsuccess(db);
 
-		};
-
-		return {
-
-			add(data) {
-
-				return new Promise((resolve, reject) => {
-
-					that.db.then(db => {
-						let request = db.transaction([storeName], 'readwrite').objectStore(storeName).add(data);
-						request.onsuccess = resolve;
-						request.onerror = reject
-					});
-
-				});
-
-			},
-
-			update(data) {
-
-				return new Promise((resolve, reject) => {
-
-					that.db.then(db => {
-						let request = db.transaction([storeName], 'readwrite').objectStore(storeName).put(data);
-						request.onsuccess = resolve;
-						request.onerror = reject
-					});
-
-				});
-
-			},
-
-			remove(key) {
-
-				if(key !== undefined) {
-					params.range = IDBKeyRange.only(key);
+				//避免多窗口时造成数据错误
+				db.onversionchange = evt => {
+					db.close();
+					throw 'IndexDB: Page content has expired, please refresh';
 				}
 
-				return new Promise((resolve, reject) => {
+				resolve(db);
+			};
 
-					//没有条件终止
-					if (!params.range) {
-						resolve(false);
-						return;
+			request.onerror = evt => {
+				this.opts.onerror(evt.target.error);
+				reject(evt.target.error);
+			};
+
+			request.blocked = evt => {
+				this.opts.blocked(evt);
+			};
+
+			this.request = request;
+
+			return this.db;
+
+		}
+
+		close(){
+			return new Promise((resolve, reject) => {
+
+				this.db.then(db => {
+					db.close();
+				});
+
+			});
+		}
+
+		store(storeName) {
+
+			let that = this;
+
+			let params = {
+				index: undefined, //索引
+				range: undefined, //范围 IDBKeyRange
+				limit: [0, 0],
+
+			};
+
+			return {
+
+				add(data) {
+
+					return new Promise((resolve, reject) => {
+
+						that.db.then(db => {
+							let request = db.transaction([storeName], 'readwrite').objectStore(storeName).add(data);
+							request.onsuccess = resolve;
+							request.onerror = reject
+						});
+
+					});
+
+				},
+
+				update(data) {
+
+					return new Promise((resolve, reject) => {
+
+						that.db.then(db => {
+							let request = db.transaction([storeName], 'readwrite').objectStore(storeName).put(data);
+							request.onsuccess = resolve;
+							request.onerror = reject
+						});
+
+					});
+
+				},
+
+				remove(key) {
+
+					if(key !== undefined) {
+						params.range = IDBKeyRange.only(key);
 					}
 
-					that.db.then(db => {
-						let request = db.transaction([storeName], 'readwrite').objectStore(storeName).delete(params.range);
-						request.onsuccess = resolve;
-						request.onerror = reject
-					});
+					return new Promise((resolve, reject) => {
 
-				});
-			},
-
-			clear() {
-
-				return new Promise((resolve, reject) => {
-
-					that.db.then(db => {
-						let request = db.transaction([storeName], 'readwrite').objectStore(storeName).clear();
-						request.onsuccess = resolve;
-						request.onerror = reject
-					});
-
-				});
-
-			},
-
-			//获得多条
-			//direction = next（从头开始向后遍历）、nextunique（从头开始向后遍历，重复的值只遍历一次）、prev（从尾部开始向前遍历）、prevunique（从尾部开始向前遍历，重复的值只遍历一次）。
-			gets(direction = 'next') {
-
-				return new Promise((resolve, reject) => {
-
-					that.db.then(db => {
-
-						let request = db.transaction([storeName], 'readonly').objectStore(storeName);
-						let isAdvancing = false; //是否移动游标
-						let result = [];
-
-						let start = params.limit[0]; //limit start, length
-						let length = params.limit[1]; //limit start, length
-
-						if (params.index) {
-							request = request.index(params.index);
+						//没有条件终止
+						if (!params.range) {
+							resolve(false);
+							return;
 						}
 
-						request = request.openCursor(params.range, direction);
+						that.db.then(db => {
+							let request = db.transaction([storeName], 'readwrite').objectStore(storeName).delete(params.range);
+							request.onsuccess = resolve;
+							request.onerror = reject
+						});
 
-						request.onsuccess = evt => {
+					});
+				},
 
-							let cursor = evt.target.result;
+				clear() {
 
-							//移动游标从此处开始
-							if (!isAdvancing && cursor && start) {
-								isAdvancing = true;
-								cursor.advance(start);
-								return;
+					return new Promise((resolve, reject) => {
+
+						that.db.then(db => {
+							let request = db.transaction([storeName], 'readwrite').objectStore(storeName).clear();
+							request.onsuccess = resolve;
+							request.onerror = reject
+						});
+
+					});
+
+				},
+
+				//获得多条
+				//direction = next（从头开始向后遍历）、nextunique（从头开始向后遍历，重复的值只遍历一次）、prev（从尾部开始向前遍历）、prevunique（从尾部开始向前遍历，重复的值只遍历一次）。
+				gets(direction = 'next') {
+
+					return new Promise((resolve, reject) => {
+
+						that.db.then(db => {
+
+							let request = db.transaction([storeName], 'readonly').objectStore(storeName);
+							let isAdvancing = false; //是否移动游标
+							let result = [];
+
+							let start = params.limit[0]; //limit start, length
+							let length = params.limit[1]; //limit start, length
+
+							if (params.index) {
+								request = request.index(params.index);
 							}
 
-							if (cursor) {
+							request = request.openCursor(params.range, direction);
 
-								result.push(cursor.value);
+							request.onsuccess = evt => {
 
-								if (length && result.length >= length) {
-									resolve(result);
-								} else {
-									cursor.continue();
+								let cursor = evt.target.result;
+
+								//移动游标从此处开始
+								if (!isAdvancing && cursor && start) {
+									isAdvancing = true;
+									cursor.advance(start);
+									return;
 								}
 
-							} else {
-								resolve(result);
-							}
-						};
+								if (cursor) {
 
-						request.onerror = evt => {
-							reject(evt);
-						};
+									result.push(cursor.value);
 
+									if (length && result.length >= length) {
+										resolve(result);
+									} else {
+										cursor.continue();
+									}
+
+								} else {
+									resolve(result);
+								}
+							};
+
+							request.onerror = evt => {
+								reject(evt);
+							};
+
+						});
 					});
-				});
 
-			},
+				},
 
-			//获得单条
-			get(key) {
+				//获得单条
+				get(key) {
 
-				if(key !== undefined) {
-					params.range = IDBKeyRange.only(key);
-				}
-
-				return new Promise((resolve, reject) => {
-
-					//没有条件终止
-					if (!params.range) {
-						resolve('');
-						return;
+					if(key !== undefined) {
+						params.range = IDBKeyRange.only(key);
 					}
 
-					that.db.then(db => {
+					return new Promise((resolve, reject) => {
 
-						let request = db.transaction([storeName], 'readonly').objectStore(storeName);
-
-						if (params.index) {
-							request = request.index(params.index);
+						//没有条件终止
+						if (!params.range) {
+							resolve('');
+							return;
 						}
 
-						request = request.openCursor(params.range);
+						that.db.then(db => {
 
-						request.onsuccess = evt => {
-							resolve(evt.target.result.value);
-						};
+							let request = db.transaction([storeName], 'readonly').objectStore(storeName);
 
-						request.onerror = evt => {
-							reject(evt);
-						};
+							if (params.index) {
+								request = request.index(params.index);
+							}
 
+							request = request.openCursor(params.range);
+
+							request.onsuccess = evt => {
+								resolve(evt.target.result.value);
+							};
+
+							request.onerror = evt => {
+								reject(evt);
+							};
+
+						});
 					});
-				});
-			},
+				},
 
-			//统计记录数
-			count() {
+				//统计记录数
+				count() {
 
-				return new Promise((resolve, reject) => {
+					return new Promise((resolve, reject) => {
 
-					that.db.then(db => {
+						that.db.then(db => {
 
-						let request = db.transaction([storeName], 'readonly').objectStore(storeName);
+							let request = db.transaction([storeName], 'readonly').objectStore(storeName);
 
-						if (params.index) {
-							request = request.index(params.index);
-						}
+							if (params.index) {
+								request = request.index(params.index);
+							}
 
-						request = request.count(params.range);//获得总记录数
+							request = request.count(params.range);//获得总记录数
 
-						request.onsuccess = evt => {
-							resolve(evt.target.result);
-						};
+							request.onsuccess = evt => {
+								resolve(evt.target.result);
+							};
 
-						request.onerror = evt => {
-							reject(evt);
-						};
+							request.onerror = evt => {
+								reject(evt);
+							};
 
+						});
 					});
-				});
-			},
+				},
 
-			//设置索引
-			index(index) {
-				params.index = index;
-				return this;
-			},
+				//设置索引
+				index(index) {
+					params.index = index;
+					return this;
+				},
 
-			//https://www.bookstack.cn/read/javascript-tutorial/spilt.11.docs-bom-indexeddb.md
-			// IDBKeyRange.lowerBound()：指定下限。
-			// IDBKeyRange.upperBound()：指定上限。
-			// IDBKeyRange.bound()：同时指定上下限。
-			// IDBKeyRange.only()：指定只包含一个值。
-			//查询范围 IDBKeyRange
-			range(range) {
-				params.range = range;
-				return this;
-			},
+				//https://www.bookstack.cn/read/javascript-tutorial/spilt.11.docs-bom-indexeddb.md
+				// IDBKeyRange.lowerBound()：指定下限。
+				// IDBKeyRange.upperBound()：指定上限。
+				// IDBKeyRange.bound()：同时指定上下限。
+				// IDBKeyRange.only()：指定只包含一个值。
+				//查询范围 IDBKeyRange
+				range(range) {
+					params.range = range;
+					return this;
+				},
 
-			//设置分页
-			limit(start, length) {
-				params.limit = [start, length];
-				return this;
-			}
+				//设置分页
+				limit(start, length) {
+					params.limit = [start, length];
+					return this;
+				}
 
-		};
+			};
+
+		}
 
 	}
 
-}
+	IDB.prototype.removeDatabase = function (dbName) {
+		this.request.removeDatabase(dbName);
+	}
 
-IDB.prototype.removeDatabase = function (dbName) {
-	this.request.removeDatabase(dbName);
-}
+	if (typeof module !== 'undefined' && typeof exports === 'object') {
+		module.exports = IDB;
+	} else if (typeof define === 'function' && (define.amd || define.cmd)) {
+		define(function () { return IDB; });
+	} else {
+		this.IDB = IDB;
+	}
 
-export default IDB;
+}).call(this || (typeof window !== 'undefined' ? window : global));
