@@ -2,8 +2,9 @@
 一个精致的 IndexDB 库，不要那么复杂，不要那么臃肿，简简单单，灵活好用。
 内部采用 Promise 技术对原生 IndexDB 各种回调进行封装，降低了 indexDB 使用难度, 让你的代码更简洁易读。
 
-[IndexDB中文文档](https://www.bookstack.cn/read/javascript-tutorial/docs-bom-indexeddb.md)
+- [IndexDB中文文档](https://www.bookstack.cn/read/javascript-tutorial/docs-bom-indexeddb.md)
 
+- [Demo](https://aiv367.github.io/idb/demo/index.html)
 
 ### 引入库
 
